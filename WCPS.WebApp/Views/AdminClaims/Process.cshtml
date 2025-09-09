@@ -1,0 +1,48 @@
+﻿@model WCPS.WebApp.ViewModels.AdminProcessViewModel
+
+@{
+    ViewData["Title"] = "Process Claim";
+}
+
+<h2>Process Claim</h2>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">@Model.Title</h5>
+        <h6 class="card-subtitle mb-2 text-muted">Ref: @Model.ClaimRef</h6>
+        <p><strong>Employee:</strong> @Model.EmployeeName</p>
+        <p><strong>Amount Claimed:</strong> @Model.AmountClaimed.ToString("N2")</p>
+    </div>
+</div>
+
+<form asp-action="Process" method="post">
+    <input asp-for="ClaimId" type="hidden" />
+
+    <div class="mb-3">
+        <label asp-for="Action" class="form-label">Action</label>
+        <select asp-for="Action" class="form-select">
+            <option value="approve">Approve</option>
+            <option value="reject">Reject</option>
+        </select>
+        <span asp-validation-for="Action" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="AmountApproved" class="form-label">Approved Amount (if approving)</label>
+        <input asp-for="AmountApproved" class="form-control" />
+        <span asp-validation-for="AmountApproved" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Note" class="form-label">Note (optional)</label>
+        <textarea asp-for="Note" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="Note" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Submit</button>
+    <a asp-action="Index" class="btn btn-secondary ms-2">Back</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

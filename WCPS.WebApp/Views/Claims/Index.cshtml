@@ -1,0 +1,39 @@
+﻿@model IEnumerable<WCPS.WebApp.Models.ClaimRequest>
+
+@{
+    ViewData["Title"] = "My Claims";
+}
+
+<h2>My Claims</h2>
+
+<p>
+    <a class="btn btn-primary" asp-action="Create">Submit New Claim</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Claim Ref</th>
+            <th>Title</th>
+            <th>Amount Claimed</th>
+            <th>Status</th>
+            <th>Created At (UTC)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in Model)
+        {
+            <tr>
+                <td>@c.ClaimRef</td>
+                <td>@c.Title</td>
+                <td>@string.Format("{0:N2}", c.AmountClaimed)</td>
+                <td>@c.Status</td>
+                <td>@c.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@c.Id">Details</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

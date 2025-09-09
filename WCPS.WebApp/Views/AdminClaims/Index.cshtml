@@ -1,0 +1,42 @@
+﻿@model IEnumerable<WCPS.WebApp.Models.ClaimRequest>
+
+@{
+    ViewData["Title"] = "Pending Claims";
+}
+
+<h2>Pending Claims</h2>
+
+@if (TempData["Notice"] != null)
+{
+    <div class="alert alert-info">
+        @TempData["Notice"]
+    </div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Claim Ref</th>
+            <th>Title</th>
+            <th>Employee</th>
+            <th>Amount Claimed</th>
+            <th>Created At (UTC)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in Model)
+        {
+            <tr>
+                <td>@c.ClaimRef</td>
+                <td>@c.Title</td>
+                <td>@c.EmployeeId</td>
+                <td>@c.AmountClaimed.ToString("N2")</td>
+                <td>@c.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    <a class="btn btn-sm btn-primary" asp-action="Process" asp-route-id="@c.Id">Process</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

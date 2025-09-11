@@ -1,0 +1,43 @@
+﻿@model WCPS.WebApp.ViewModels.AdminEmployeeViewModel
+
+@{
+    ViewData["Title"] = "Delete Employee";
+}
+
+<h2>Delete Employee</h2>
+
+<div class="alert alert-warning">
+    Are you sure you want to delete this employee? This action cannot be undone.
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Employee No</dt>
+            <dd class="col-sm-9">@Model.EmployeeNo</dd>
+
+            <dt class="col-sm-3">Full Name</dt>
+            <dd class="col-sm-9">@Model.FullName</dd>
+
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">@Model.Email</dd>
+
+            <dt class="col-sm-3">Roles</dt>
+            <dd class="col-sm-9">@Model.Roles</dd>
+
+            <dt class="col-sm-3">Bank Account</dt>
+            <dd class="col-sm-9">@Model.BankAccountNumber</dd>
+
+            <dt class="col-sm-3">Last Login</dt>
+            <dd class="col-sm-9">@Model.LastLoginAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</dd>
+
+
+        </dl>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" asp-for="Id" />
+            <button type="submit" class="btn btn-danger">Confirm Delete</button>
+            <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+        </form>
+    </div>
+</div>

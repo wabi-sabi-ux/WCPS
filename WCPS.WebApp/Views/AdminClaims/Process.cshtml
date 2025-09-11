@@ -6,43 +6,191 @@
 
 <h2>Process Claim</h2>
 
-<div class="card mb-3">
-    <div class="card-body">
-        <h5 class="card-title">@Model.Title</h5>
-        <h6 class="card-subtitle mb-2 text-muted">Ref: @Model.ClaimRef</h6>
-        <p><strong>Employee:</strong> @Model.EmployeeName</p>
-        <p><strong>Amount Claimed:</strong> @Model.AmountClaimed.ToString("N2")</p>
+<div class="row">
+    <div class="col-md-7">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">@Model.Title</h5>
+                <h6 class="card-subtitle mb-2 text-muted">Ref: @Model.ClaimRef</h6>
+
+                <p><strong>Employee:</strong> @Model.EmployeeName</p>
+                <p><strong>Amount Claimed:</strong> @Model.AmountClaimed.ToString("C")</p>
+            </div>
+        </div>
+
+        @* Preview / Download block (uses ClaimsController.DownloadReceipt) *@
+        <div class="mb-4">
+            <div class="mb-2">
+                <a class="btn btn-sm btn-outline-primary me-2"
+                   asp-controller="Claims"
+                   asp-action="DownloadReceipt"
+                   asp-route-id="@Model.ClaimId"
+                   asp-route-mode="preview"
+                   target="_blank">
+                    Preview (new tab)
+                </a>
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        id="btnDownloadConfirm"
+                        data-download-url="@Url.Action("DownloadReceipt", "Claims", new { id = Model.ClaimId, mode = "download" })">
+                    Download
+                </button>
+            </div>
+
+            <div style="height:600px; border:1px solid #e1e1e1; padding:6px;">
+                <iframe id="adminReceiptFrame"
+                        src="@Url.Action("DownloadReceipt", "Claims", new { id = Model.ClaimId, mode = "preview" })"
+                        width="100%" height="100%" frameborder="0"></iframe>
+            </div>
+        </div>
+
+        @* --- Audit trail section (most recent first) --- *@
+        @if (Model.AuditEntries != null && Model.AuditEntries.Any())
+        {
+            <div class="card mt-3">
+                <div class="card-header">
+                    <strong>Audit Trail</strong>
+                    <span class="text-muted ms-2">(recent first)</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>Performed By</th>
+                                    <th>Timestamp (Local)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var a in Model.AuditEntries)
+                                {
+                                    <tr>
+                                        <td>@a.Action</td>
+                                        <td>@a.PerformedByName</td>
+                                        <td>@a.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-secondary mt-3">
+                No audit entries found for this claim.
+            </div>
+        }
+    </div>
+
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-body">
+                @* Show model-level validation errors *@
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                @if (TempData["ProcessErrors"] != null)
+                {
+                    <div class="alert alert-danger">
+                        @TempData["ProcessErrors"]
+                    </div>
+                }
+
+                <form asp-action="Process" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <input asp-for="ClaimId" type="hidden" />
+
+                    <div class="mb-3">
+                        <label asp-for="Action" class="form-label">Action</label>
+                        <select asp-for="Action" class="form-select" id="actionSelect">
+                            <option value="approve">Approve</option>
+                            <option value="reject">Reject</option>
+                        </select>
+                        <span asp-validation-for="Action" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3" id="approvedAmountWrapper">
+                        <label asp-for="AmountApproved" class="form-label">Approved Amount (if approving)</label>
+                        <input asp-for="AmountApproved" class="form-control" type="number" step="0.01" min="0" />
+                        <span asp-validation-for="AmountApproved" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Note" class="form-label">Note (optional)</label>
+                        <textarea asp-for="Note" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Note" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">Submit</button>
+                    <a asp-action="Index" class="btn btn-secondary ms-2">Back</a>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
-<form asp-action="Process" method="post">
-    <input asp-for="ClaimId" type="hidden" />
-
-    <div class="mb-3">
-        <label asp-for="Action" class="form-label">Action</label>
-        <select asp-for="Action" class="form-select">
-            <option value="approve">Approve</option>
-            <option value="reject">Reject</option>
-        </select>
-        <span asp-validation-for="Action" class="text-danger"></span>
+<!-- Confirmation Modal (single modal for this page) -->
+<div class="modal fade" id="confirmDownloadModal" tabindex="-1" aria-labelledby="confirmDownloadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDownloadModalLabel">Confirm Download</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to download this receipt? The file will be saved to your device.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a id="confirmDownloadBtn" class="btn btn-sm btn-primary" href="#" role="button">Confirm Download</a>
+            </div>
+        </div>
     </div>
-
-    <div class="mb-3">
-        <label asp-for="AmountApproved" class="form-label">Approved Amount (if approving)</label>
-        <input asp-for="AmountApproved" class="form-control" />
-        <span asp-validation-for="AmountApproved" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="Note" class="form-label">Note (optional)</label>
-        <textarea asp-for="Note" class="form-control" rows="3"></textarea>
-        <span asp-validation-for="Note" class="text-danger"></span>
-    </div>
-
-    <button type="submit" class="btn btn-success">Submit</button>
-    <a asp-action="Index" class="btn btn-secondary ms-2">Back</a>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            // Download confirm modal
+            var confirmModalEl = document.getElementById('confirmDownloadModal');
+            var confirmModal = new bootstrap.Modal(confirmModalEl);
+
+            var btn = document.getElementById('btnDownloadConfirm');
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    var url = this.getAttribute('data-download-url');
+                    document.getElementById('confirmDownloadBtn').setAttribute('href', url);
+                    confirmModal.show();
+                });
+            }
+
+            // Toggle approved amount visibility & requirement based on action select
+            var actionSelect = document.getElementById('actionSelect');
+            var approvedWrapper = document.getElementById('approvedAmountWrapper');
+            var approvedInput = document.querySelector('input[name="AmountApproved"]');
+
+            function updateApprovedField() {
+                if (!actionSelect || !approvedWrapper || !approvedInput) return;
+                if (actionSelect.value === 'approve') {
+                    approvedWrapper.style.display = '';
+                    approvedInput.required = true;
+                } else {
+                    approvedWrapper.style.display = 'none';
+                    approvedInput.required = false;
+                    approvedInput.value = '';
+                }
+            }
+
+            // init on load
+            updateApprovedField();
+            actionSelect.addEventListener('change', updateApprovedField);
+
+        })();
+    </script>
 }

@@ -1,0 +1,35 @@
+﻿@model WCPS.WebApp.ViewModels.AdminEmployeeViewModel
+
+@{
+    ViewData["Title"] = "Employee Details";
+}
+
+<h2>Employee Details</h2>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Employee No</dt>
+            <dd class="col-sm-9">@Model.EmployeeNo</dd>
+
+            <dt class="col-sm-3">Full Name</dt>
+            <dd class="col-sm-9">@Model.FullName</dd>
+
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">@Model.Email</dd>
+
+            <dt class="col-sm-3">Roles</dt>
+            <dd class="col-sm-9">@Model.Roles</dd>
+
+            <dt class="col-sm-3">Last Login</dt>
+            <dd class="col-sm-9">@Model.LastLoginAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</dd>
+
+            <dt class="col-sm-3">Bank Account</dt>
+            <dd class="col-sm-9">@Model.BankAccountNumber</dd>
+
+        </dl>
+
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Back</a>
+    </div>
+</div>

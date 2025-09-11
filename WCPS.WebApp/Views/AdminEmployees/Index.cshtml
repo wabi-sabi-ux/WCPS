@@ -1,0 +1,61 @@
+﻿@model IEnumerable<WCPS.WebApp.ViewModels.AdminEmployeeViewModel>
+
+@{
+    ViewData["Title"] = "Employees";
+}
+
+<h2 class="mb-3">Employees</h2>
+
+<p>
+    <a asp-controller="AdminEmployees" asp-action="Create" class="btn btn-sm btn-success me-2">+ Add Employee</a>
+    <a asp-controller="AdminEmployees" asp-action="Index" class="btn btn-sm btn-outline-primary">Refresh</a>
+</p>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Employee No</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Bank Account</th>
+            <th>Last Login (Local)</th>
+            <th style="width:180px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@(u.EmployeeNo ?? "-")</td>
+                <td>@(u.FullName ?? "-")</td>
+                <td>@u.Email</td>
+                <td>
+                    @if (!string.IsNullOrWhiteSpace(u.Roles))
+                    {
+                        var roles = u.Roles.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                        foreach (var role in roles)
+                        {
+                            <span class="badge bg-secondary me-1">@role</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted">-</span>
+                    }
+            </td>
+            <td>
+                @(string.IsNullOrWhiteSpace(u.BankAccountNumber)
+                                ? Html.Raw("<span class='text-muted'>-</span>")
+                                : u.BankAccountNumber)
+            </td>
+            <td>@(u.LastLoginAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+            <td>
+                <a asp-action="Details" asp-route-id="@u.Id" class="btn btn-sm btn-info me-1">View</a>
+                <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-warning me-1">Edit</a>
+                <a asp-action="Delete" asp-route-id="@u.Id" class="btn btn-sm btn-danger">Delete</a>
+            </td>
+        </tr>
+                }
+    </tbody>
+</table>

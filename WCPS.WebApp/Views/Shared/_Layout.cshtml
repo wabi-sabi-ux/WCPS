@@ -33,14 +33,29 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
 
-                        <!-- added My Claims link -->
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Claims" asp-action="Index">My Claims</a>
                         </li>
+
+                        @* Admin link: only visible to users in CpdAdmin role *@
+                        @if (SignInManager.IsSignedIn(User) && User.IsInRole("CpdAdmin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="AdminClaims" asp-action="Index">Admin - Pending</a>
+                            </li>
+                        }
                     </ul>
 
-                    <!-- right side: login / user menu -->
                     <ul class="navbar-nav">
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <li class="nav-item nav-link">
+                                @{
+                                    var currentUser = await UserManager.GetUserAsync(User);
+                                }
+                                <span class="me-2">Hello, @(currentUser?.FullName ?? User.Identity?.Name)</span>
+                            </li>
+                        }
                         <li class="nav-item">
                             @await Html.PartialAsync("_LoginPartial")
                         </li>

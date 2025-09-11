@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WCPS.WebApp.Models
@@ -30,5 +31,14 @@ namespace WCPS.WebApp.Models
         public ClaimStatus Status { get; set; } = ClaimStatus.Pending;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // NEW: path to uploaded receipt PDF (relative to wwwroot/uploads/)
+        // Example stored value: "userId/3f2b1a9d4c6e.pdf"
+        [StringLength(260)]
+        public string? ReceiptPath { get; set; }
+
+        // NEW: processing audit fields (if already present keep them)
+        public DateTime? ProcessedAt { get; set; }
+        public string? ProcessedById { get; set; }
     }
 }

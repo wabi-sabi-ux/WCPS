@@ -1,0 +1,12 @@
+﻿@model WCPS.WebApp.Models.ClaimStatus
+
+@{
+    string cls = Model switch
+    {
+        WCPS.WebApp.Models.ClaimStatus.Pending => "badge bg-warning text-dark",
+        WCPS.WebApp.Models.ClaimStatus.Approved => "badge bg-success",
+        WCPS.WebApp.Models.ClaimStatus.Rejected => "badge bg-danger",
+        _ => "badge bg-secondary"
+    };
+}
+<span class="@cls">@Model.ToString()</span>

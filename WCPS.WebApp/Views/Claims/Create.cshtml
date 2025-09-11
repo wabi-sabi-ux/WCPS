@@ -6,7 +6,14 @@
 
 <h2>Submit Claim</h2>
 
-<form asp-action="Create" method="post">
+@if (TempData["ModelErrors"] != null)
+{
+    <div class="alert alert-danger">
+        <pre>@TempData["ModelErrors"]</pre>
+    </div>
+}
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <div class="mb-3">
@@ -23,8 +30,14 @@
 
     <div class="mb-3">
         <label asp-for="AmountClaimed" class="form-label"></label>
-        <input asp-for="AmountClaimed" class="form-control" />
+        <input asp-for="AmountClaimed" class="form-control" type="number" step="0.01" min="0" />
         <span asp-validation-for="AmountClaimed" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label for="Receipt" class="form-label">Upload receipt (PDF, max 5 MB)</label>
+        <input type="file" name="Receipt" id="Receipt" accept="application/pdf" class="form-control" />
+        <span class="text-muted">Optional — upload a scanned receipt or invoice (PDF only).</span>
     </div>
 
     <button type="submit" class="btn btn-primary">Submit</button>

@@ -20,7 +20,8 @@
             <th>Title</th>
             <th>Employee</th>
             <th>Amount Claimed</th>
-            <th>Created At (UTC)</th>
+            <th>Status</th>
+            <th>Created At</th>
             <th></th>
         </tr>
     </thead>
@@ -30,13 +31,73 @@
             <tr>
                 <td>@c.ClaimRef</td>
                 <td>@c.Title</td>
-                <td>@c.EmployeeId</td>
-                <td>@c.AmountClaimed.ToString("N2")</td>
-                <td>@c.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>@c.Employee?.FullName ?? c.EmployeeId</td>
+                <td>@c.AmountClaimed.ToString("C")</td>
+                <td>@await Html.PartialAsync("_StatusBadge", c.Status)</td>
+                <td>@c.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
                 <td>
-                    <a class="btn btn-sm btn-primary" asp-action="Process" asp-route-id="@c.Id">Process</a>
+                    <a class="btn btn-sm btn-primary me-1" asp-action="Process" asp-route-id="@c.Id">Process</a>
+
+                    @if (!string.IsNullOrEmpty(c.ReceiptPath))
+                    {
+                        <a class="btn btn-sm btn-outline-primary me-1"
+                           asp-controller="Claims"
+                           asp-action="DownloadReceipt"
+                           asp-route-id="@c.Id"
+                           asp-route-mode="preview"
+                           target="_blank">
+                            Preview
+                        </a>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary download-btn"
+                                data-download-url="@Url.Action("DownloadReceipt", "Claims", new { id = c.Id, mode = "download" })">
+                            Download
+                        </button>
+                    }
                 </td>
             </tr>
         }
     </tbody>
 </table>
+<!-- Confirmation Modal (shared for all rows) -->
+<div class="modal fade" id="confirmDownloadModal" tabindex="-1" aria-labelledby="confirmDownloadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDownloadModalLabel">Confirm Download</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to download this receipt?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a id="confirmDownloadBtn" class="btn btn-sm btn-primary" href="#" role="button">Confirm Download</a>
+            </div>
+        </div>
+    </div>
+</div>
+</div> <!-- maybe closing container or section -->
+<!-- Confirmation Modal (shared for all rows) -->
+<div class="modal fade" id="confirmDownloadModal" tabindex="-1" aria-labelledby="confirmDownloadModalLabel" aria-hidden="true">
+    ...
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var confirmModalEl = document.getElementById('confirmDownloadModal');
+            var confirmModal = new bootstrap.Modal(confirmModalEl);
+
+            document.querySelectorAll('.download-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var url = this.getAttribute('data-download-url');
+                    document.getElementById('confirmDownloadBtn').setAttribute('href', url);
+                    confirmModal.show();
+                });
+            });
+        })();
+    </script>
+}
+

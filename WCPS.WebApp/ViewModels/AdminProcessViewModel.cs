@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace WCPS.WebApp.ViewModels
 {
@@ -7,19 +9,21 @@ namespace WCPS.WebApp.ViewModels
         [Required]
         public int ClaimId { get; set; }
 
-        public string ClaimRef { get; set; } = null!;
-        public string Title { get; set; } = null!;
+        // Display-only fields (not required on POST)
+        public string? ClaimRef { get; set; }
+        public string? Title { get; set; }
         public decimal AmountClaimed { get; set; }
-        public string EmployeeName { get; set; } = null!;
+        public string? EmployeeName { get; set; }
 
         [Display(Name = "Action")]
         [Required]
-        public string Action { get; set; } = "approve"; //"approve"/"reject"
+        public string Action { get; set; } = "approve"; // "approve" or "reject"
 
         [Display(Name = "Approved Amount")]
-        [Range(0, 100000)]
         public decimal? AmountApproved { get; set; }
 
         public string? Note { get; set; }
+
+        public List<AuditEntryViewModel>? AuditEntries { get; set; } = new List<AuditEntryViewModel>();
     }
 }

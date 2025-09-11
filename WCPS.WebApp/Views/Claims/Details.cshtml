@@ -4,21 +4,105 @@
     ViewData["Title"] = "Claim Details";
 }
 
-<h2>Claim Details</h2>
+<h1>Claim Details</h1>
 
-<div class="card">
+<div class="card mb-4">
     <div class="card-body">
-        <h5 class="card-title">@Model.Title</h5>
-        <h6 class="card-subtitle mb-2 text-muted">Ref: @Model.ClaimRef</h6>
-        <p class="card-text">@Model.Description</p>
+        <h4 class="card-title">@Model.Title</h4>
+        <p class="text-muted">Ref: @Model.ClaimRef</p>
 
-        <p><strong>Amount Claimed:</strong> @Model.AmountClaimed.ToString("N2")</p>
-        <p><strong>Status:</strong> @Model.Status</p>
-        <p><strong>Created:</strong> @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</p>
-        <p><strong>Submitted by:</strong> @Model.Employee?.FullName ?? "N/A"</p>
+        <p>@Model.Description</p>
+
+        <p>
+            <strong>Amount Claimed:</strong> @Model.AmountClaimed.ToString("C")
+        </p>
+
+        <p>
+            <strong>Status:</strong> @await Html.PartialAsync("_StatusBadge", Model.Status)
+        </p>
+
+        <p>
+            <strong>Created:</strong> @Model.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+        </p>
+
+        <p>
+            <strong>Submitted by:</strong>
+            @if (Model.Employee != null)
+            {
+                @Model.Employee.FullName
+            }
+            else
+            {
+                <span>N/A</span>
+            }
+        </p>
     </div>
 </div>
 
-<p class="mt-3">
-    <a asp-action="Index" class="btn btn-secondary">Back to list</a>
-</p>
+@* Receipt / preview section with Download Confirm Modal *@
+@if (!string.IsNullOrEmpty(Model.ReceiptPath))
+{
+    <div class="mb-4">
+        <div class="mb-2">
+            <a class="btn btn-sm btn-outline-primary me-2" asp-action="DownloadReceipt" asp-route-id="@Model.Id" asp-route-mode="preview">Preview</a>
+
+            @* Download button: opens modal *@
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    id="btnDownloadConfirm"
+                    data-download-url="@Url.Action("DownloadReceipt", "Claims", new { id = Model.Id, mode = "download" })">
+                Download
+            </button>
+        </div>
+
+        <div style="height:700px; border:1px solid #e1e1e1; padding:6px;">
+            <iframe id="receiptFrame"
+                    src="@Url.Action("DownloadReceipt", "Claims", new { id = Model.Id, mode = "preview" })"
+                    width="100%" height="100%" frameborder="0"></iframe>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmDownloadModal" tabindex="-1" aria-labelledby="confirmDownloadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDownloadModalLabel">Confirm Download</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to download the receipt? The file will be saved to your device.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a id="confirmDownloadBtn" class="btn btn-sm btn-primary" href="#" role="button">Confirm Download</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            (function () {
+                // bootstrap modal instance
+                var confirmModalEl = document.getElementById('confirmDownloadModal');
+                var confirmModal = new bootstrap.Modal(confirmModalEl);
+
+                // when user clicks Download button, open modal and set confirm href
+                document.getElementById('btnDownloadConfirm').addEventListener('click', function (e) {
+                    var url = this.getAttribute('data-download-url');
+                    document.getElementById('confirmDownloadBtn').setAttribute('href', url);
+                    confirmModal.show();
+                });
+            })();
+        </script>
+    }
+}
+else
+{
+    <div class="alert alert-secondary">
+        No receipt uploaded for this claim.
+    </div>
+}
+
+

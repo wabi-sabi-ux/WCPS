@@ -115,6 +115,21 @@ namespace WCPS.WebApp.Areas.Identity.Pages.Account
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
+                    // Update LastLoginAt on successful sign-in (best-effort)
+                    try
+                    {
+                        var user = await _signInManager.UserManager.FindByEmailAsync(Input.Email);
+                        if (user != null)
+                        {
+                            user.LastLoginAt = DateTime.UtcNow;
+                            await _signInManager.UserManager.UpdateAsync(user);
+                        }
+                    }
+                    catch
+                    {
+                        // Don't block sign-in if update fails; optionally log here
+                    }
+
                     _logger.LogInformation("User logged in.");
                     return LocalRedirect(returnUrl);
                 }

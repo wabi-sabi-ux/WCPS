@@ -1,0 +1,42 @@
+﻿@model IEnumerable<WCPS.WebApp.ViewModels.AuditEntryViewModel>
+
+@{
+    ViewData["Title"] = "Audit Trail";
+}
+
+<div class="container mt-4">
+    <h2>Audit Trail</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-secondary">No audit entries found.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>When</th>
+                                <th>Action</th>
+                                <th>Performed By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var a in Model)
+                            {
+                                <tr>
+                                    <td>@a.Timestamp.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                                    <td>@a.Action</td>
+                                    <td>@a.PerformedByName</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>

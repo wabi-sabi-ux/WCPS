@@ -1,103 +1,77 @@
-﻿@model IEnumerable<WCPS.WebApp.Models.ClaimRequest>
-
-@{
-    ViewData["Title"] = "Pending Claims";
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
 }
 
-<h2>Pending Claims</h2>
+<div class="container mt-4">
+    <h2 class="mb-4">Admin Dashboard</h2>
 
-@if (TempData["Notice"] != null)
-{
-    <div class="alert alert-info">
-        @TempData["Notice"]
+    <div class="row g-4">
+        <!-- Pending Claims Tile -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <h5 class="card-title">Pending Claims</h5>
+                    <p class="card-text text-muted">View and process employee claims waiting for approval.</p>
+                    <a asp-controller="AdminClaims" asp-action="Index" class="btn btn-primary mt-auto">
+                        View Pending
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Management Tile -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <h5 class="card-title">Manage Employees</h5>
+                    <p class="card-text text-muted">Add, edit, or remove employees and manage their roles.</p>
+                    <a asp-controller="AdminEmployees" asp-action="Index" class="btn btn-success mt-auto">
+                        Manage Employees
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Trail Tile -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <h5 class="card-title">Audit Trail</h5>
+                    <p class="card-text text-muted">View all system activities and claim history for compliance.</p>
+                    <a asp-controller="AdminClaims" asp-action="Audit" class="btn btn-outline-primary mt-auto">
+                        Open Audit
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-}
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Claim Ref</th>
-            <th>Title</th>
-            <th>Employee</th>
-            <th>Amount Claimed</th>
-            <th>Status</th>
-            <th>Created At</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var c in Model)
-        {
-            <tr>
-                <td>@c.ClaimRef</td>
-                <td>@c.Title</td>
-                <td>@c.Employee?.FullName ?? c.EmployeeId</td>
-                <td>@c.AmountClaimed.ToString("C")</td>
-                <td>@await Html.PartialAsync("_StatusBadge", c.Status)</td>
-                <td>@c.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
-                <td>
-                    <a class="btn btn-sm btn-primary me-1" asp-action="Process" asp-route-id="@c.Id">Process</a>
-
-                    @if (!string.IsNullOrEmpty(c.ReceiptPath))
-                    {
-                        <a class="btn btn-sm btn-outline-primary me-1"
-                           asp-controller="Claims"
-                           asp-action="DownloadReceipt"
-                           asp-route-id="@c.Id"
-                           asp-route-mode="preview"
-                           target="_blank">
-                            Preview
-                        </a>
-
-                        <button type="button"
-                                class="btn btn-sm btn-outline-secondary download-btn"
-                                data-download-url="@Url.Action("DownloadReceipt", "Claims", new { id = c.Id, mode = "download" })">
-                            Download
-                        </button>
-                    }
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-<!-- Confirmation Modal (shared for all rows) -->
-<div class="modal fade" id="confirmDownloadModal" tabindex="-1" aria-labelledby="confirmDownloadModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="confirmDownloadModalLabel">Confirm Download</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to download this receipt?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a id="confirmDownloadBtn" class="btn btn-sm btn-primary" href="#" role="button">Confirm Download</a>
+    <!-- Optional: Chart Section -->
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Claims Overview</h5>
+                    <canvas id="claimsPieChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
 </div>
-</div> <!-- maybe closing container or section -->
-<!-- Confirmation Modal (shared for all rows) -->
-<div class="modal fade" id="confirmDownloadModal" tabindex="-1" aria-labelledby="confirmDownloadModalLabel" aria-hidden="true">
-    ...
-</div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        (function () {
-            var confirmModalEl = document.getElementById('confirmDownloadModal');
-            var confirmModal = new bootstrap.Modal(confirmModalEl);
-
-            document.querySelectorAll('.download-btn').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var url = this.getAttribute('data-download-url');
-                    document.getElementById('confirmDownloadBtn').setAttribute('href', url);
-                    confirmModal.show();
-                });
-            });
-        })();
+        const ctx = document.getElementById('claimsPieChart').getContext('2d');
+        const claimsPieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Pending', 'Approved', 'Rejected'],
+                datasets: [{
+                    data: [10, 20, 5], // placeholder, can be replaced with dynamic values
+                    backgroundColor: ['#f0ad4e', '#5cb85c', '#d9534f']
+                }]
+            }
+        });
     </script>
 }
-

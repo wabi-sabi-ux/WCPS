@@ -19,14 +19,6 @@
 - Confirm download modals added for receipts.
 - Polished employee & admin claim tables.
 
-## 🚀 Next Priorities
-1. Polish AdminClaims Index (consistent with employee UI).
-2. Finish Employee CRUD polish (validation, optional export).
-3. Improve Admin Process UX (history inline, confirm dialogs).
-4. Dashboard/Reporting (counts, totals, charts).
-5. Testing & QA (edge cases, invalid file uploads).
-6. Documentation & GitHub push:
-   - README with build/run instructions.
-   - Commit & push to GitHub with screenshots.
+
 
 ---

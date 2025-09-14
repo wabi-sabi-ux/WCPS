@@ -3,82 +3,121 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
+@{
+    ApplicationUser? _currentUser = null;
+    string _displayName = "User";
+
+    if (SignInManager.IsSignedIn(User))
+    {
+        _currentUser = await UserManager.GetUserAsync(User);
+        _displayName = _currentUser?.FullName ?? User.Identity?.Name ?? "User";
+    }
+}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - WCPS.WebApp</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - WCPS</title>
+
+    <!-- Bootstrap CSS (CDN) - no integrity attribute -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" crossorigin="anonymous" />
+
+    <!-- Your custom styles -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/WCPS.WebApp.styles.css" asp-append-version="true" />
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">WCPS.WebApp</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+            <div class="container">
+                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">WCPS</a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between" id="navbarSupportedContent">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
 
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Claims" asp-action="Index">My Claims</a>
-                        </li>
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Claims" asp-action="Index">My Claims</a></li>
+                        }
 
-                        @* Admin link: only visible to users in CpdAdmin role *@
                         @if (SignInManager.IsSignedIn(User) && User.IsInRole("CpdAdmin"))
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="AdminClaims" asp-action="Index">Admin - Pending</a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="AdminClaims" asp-action="Index">Admin - Pending</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="AdminEmployees" asp-action="Index">Employees</a></li>
                         }
                     </ul>
 
-                    <ul class="navbar-nav">
+                    <ul class="navbar-nav ms-auto">
                         @if (SignInManager.IsSignedIn(User))
                         {
-                            <li class="nav-item nav-link">
-                                @{
-                                    var currentUser = await UserManager.GetUserAsync(User);
-                                }
-                                <span class="me-2">Hello, @(currentUser?.FullName ?? User.Identity?.Name)</span>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-person-circle"></i> @_displayName
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                                    <li><a class="dropdown-item" asp-controller="Claims" asp-action="Index">My Claims</a></li>
+                                    @if (User.IsInRole("CpdAdmin"))
+                                    {
+                                        <li><a class="dropdown-item" asp-controller="AdminClaims" asp-action="Index">Admin Pending</a></li>
+                                        <li><a class="dropdown-item" asp-controller="AdminEmployees" asp-action="Index">Employees</a></li>
+                                    }
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form class="px-3" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="~/" method="post" id="logoutForm">
+                                            <button type="submit" class="btn btn-link dropdown-item">Logout</button>
+                                        </form>
+
+                                    </li>
+                                </ul>
                             </li>
                         }
-                        <li class="nav-item">
-                            @await Html.PartialAsync("_LoginPartial")
-                        </li>
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-area="Identity" asp-page="/Account/Register">Register</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Login</a></li>
+                        }
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
 
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+    <main role="main" class="flex-fill container mt-4">
+        @if (TempData.ContainsKey("Notice"))
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["Notice"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @RenderBody()
+    </main>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - WCPS.WebApp - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="border-top py-3 bg-white mt-auto">
+        <div class="container d-flex justify-content-between small">
+            <div>&copy; @DateTime.UtcNow.Year - WCPS</div>
+            <div><a asp-controller="Home" asp-action="Privacy">Privacy</a></div>
         </div>
     </footer>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

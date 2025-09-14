@@ -1,8 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -14,71 +12,61 @@ namespace WCPS.WebApp.Areas.Identity.Pages.Account
     [AllowAnonymous]
     public class RegisterModel : PageModel
     {
-        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<RegisterModel> _logger;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            RoleManager<IdentityRole> roleManager,
             ILogger<RegisterModel> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
-            _roleManager = roleManager;
             _logger = logger;
         }
 
         [BindProperty]
-        public InputModel Input { get; set; } = null!;
+        public InputModel Input { get; set; } = default!;
 
-        /// <summary>
-        /// External login providers (Google, Microsoft, etc.) — the view checks this.
-        /// </summary>
-        public IList<AuthenticationScheme> ExternalLogins { get; set; } = new List<AuthenticationScheme>();
-
-        public string ReturnUrl { get; set; } = string.Empty;
+        public string? ReturnUrl { get; set; }
 
         public class InputModel
         {
             [Required]
-            [Display(Name = "Employee No")]
-            public string EmployeeNo { get; set; } = null!;
-
-            [Required]
             [Display(Name = "Full name")]
-            public string FullName { get; set; } = null!;
+            [StringLength(100)]
+            public string FullName { get; set; } = string.Empty;
+
+            [Display(Name = "Employee number")]
+            [StringLength(50)]
+            public string? EmployeeNo { get; set; }
 
             [Required]
             [EmailAddress]
             [Display(Name = "Email")]
-            public string Email { get; set; } = null!;
+            public string Email { get; set; } = string.Empty;
 
             [Required]
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)]
             [DataType(DataType.Password)]
             [Display(Name = "Password")]
-            public string Password { get; set; } = null!;
+            public string Password { get; set; } = string.Empty;
 
             [DataType(DataType.Password)]
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-            public string ConfirmPassword { get; set; } = null!;
+            public string ConfirmPassword { get; set; } = string.Empty;
         }
 
-        public async Task OnGetAsync(string? returnUrl = null)
+        public void OnGet(string? returnUrl = null)
         {
             ReturnUrl = returnUrl ?? Url.Content("~/");
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
 
         public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
         {
-            returnUrl ??= Url.Content("~/");
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-
+            ReturnUrl = returnUrl ?? Url.Content("~/");
             if (!ModelState.IsValid)
             {
                 return Page();
@@ -88,35 +76,37 @@ namespace WCPS.WebApp.Areas.Identity.Pages.Account
             {
                 UserName = Input.Email,
                 Email = Input.Email,
+                FullName = Input.FullName,
                 EmployeeNo = Input.EmployeeNo,
-                FullName = Input.FullName
+                EmailConfirmed = true // for demo: auto-confirm; in production require email confirmation
             };
 
             var result = await _userManager.CreateAsync(user, Input.Password);
             if (result.Succeeded)
             {
-                _logger.LogInformation("User created a new account with password.");
+                _logger.LogInformation("New user created a profile.");
 
-                // Ensure Employee role exists and assign
-                var roleName = "Employee";
-                if (!await _roleManager.RoleExistsAsync(roleName))
+                // add to Employee role if it exists
+                try
                 {
-                    await _roleManager.CreateAsync(new IdentityRole(roleName));
+                    await _userManager.AddToRoleAsync(user, "Employee");
                 }
-
-                await _userManager.AddToRoleAsync(user, roleName);
+                catch
+                {
+                    // ignore if role missing; seeding should create it
+                }
 
                 // Sign in the user
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                return LocalRedirect(returnUrl);
+                return LocalRedirect(ReturnUrl);
             }
 
-            // If we got here something failed; show errors
             foreach (var error in result.Errors)
             {
                 ModelState.AddModelError(string.Empty, error.Description);
             }
 
+            // If we got this far, something failed, redisplay form
             return Page();
         }
     }

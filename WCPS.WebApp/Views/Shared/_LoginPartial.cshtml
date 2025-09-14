@@ -4,22 +4,50 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
+@{
+    // Compute the display name once (async allowed here)
+    string displayName = "User";
+    if (SignInManager.IsSignedIn(User))
+    {
+        var currentUser = await UserManager.GetUserAsync(User);
+        displayName = currentUser?.FullName ?? User.Identity?.Name ?? "User";
+    }
+}
+
 <ul class="navbar-nav">
     @if (SignInManager.IsSignedIn(User))
     {
-        <li class="nav-item">
-            <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" method="post">
-                <button id="logout" type="submit" class="nav-link btn btn-link text-dark border-0">Logout</button>
-            </form>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="partialUserMenu" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle"></i> @displayName
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="partialUserMenu">
+                <li>
+                    <a class="dropdown-item" asp-controller="Claims" asp-action="Index">My Claims</a>
+                </li>
+                @if (User.IsInRole("CpdAdmin"))
+                {
+                    <li>
+                        <a class="dropdown-item" asp-controller="AdminClaims" asp-action="Index">Admin Dashboard</a>
+                    </li>
+                }
+                <li><hr class="dropdown-divider" /></li>
+                <li class="px-3">
+                    <form asp-area="Identity" asp-page="/Account/Logout" method="post" id="logoutFormPartial">
+                        <button type="submit" class="btn btn-link dropdown-item">Logout</button>
+                    </form>
+                </li>
+            </ul>
         </li>
     }
     else
     {
         <li class="nav-item">
-            <a class="nav-link text-dark" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
+            <a class="nav-link" asp-area="Identity" asp-page="/Account/Register">Register</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-dark" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
+            <a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Login</a>
         </li>
     }
 </ul>

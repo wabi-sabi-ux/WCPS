@@ -4,105 +4,138 @@
     ViewData["Title"] = "Claim Details";
 }
 
-<h1>Claim Details</h1>
+<div class="container mt-4">
+    <h2 class="mb-4">Claim Details</h2>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <h4 class="card-title">@Model.Title</h4>
-        <p class="text-muted">Ref: @Model.ClaimRef</p>
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h4 class="card-title">@Model.Title</h4>
+            <p class="text-muted mb-1">Ref: <code>@Model.ClaimRef</code></p>
+            <p class="mb-3">@Model.Description</p>
 
-        <p>@Model.Description</p>
+            <dl class="row">
+                <dt class="col-sm-3">Amount Claimed</dt>
+                <dd class="col-sm-9">₹@Model.AmountClaimed.ToString("N2")</dd>
 
-        <p>
-            <strong>Amount Claimed:</strong> @Model.AmountClaimed.ToString("C")
-        </p>
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9">
+                    @if (Model.Status == WCPS.WebApp.Models.ClaimStatus.Pending)
+                    {
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    }
+                    else if (Model.Status == WCPS.WebApp.Models.ClaimStatus.Approved)
+                    {
+                        <span class="badge bg-success">Approved</span>
+                        @if (Model.AmountApproved.HasValue)
+                        {
+                            <div class="small text-muted">
+                                Approved: ₹@Model.AmountApproved.Value.ToString("N2")
+                            </div>
+                        }
+                    }
+                    else if (Model.Status == WCPS.WebApp.Models.ClaimStatus.Rejected)
+                    {
+                        <span class="badge bg-danger">Rejected</span>
+                    }
+                </dd>
 
-        <p>
-            <strong>Status:</strong> @await Html.PartialAsync("_StatusBadge", Model.Status)
-        </p>
+                <dt class="col-sm-3">Created</dt>
+                <dd class="col-sm-9">@Model.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</dd>
 
-        <p>
-            <strong>Created:</strong> @Model.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
-        </p>
+                <dt class="col-sm-3">Submitted By</dt>
+                <dd class="col-sm-9">
+                    @if (Model.Employee != null)
+                    {
+                        @Model.Employee.FullName
+                    }
+                    else
+                    {
+                        <span>N/A</span>
+                    }
+                </dd>
 
-        <p>
-            <strong>Submitted by:</strong>
-            @if (Model.Employee != null)
-            {
-                @Model.Employee.FullName
-            }
-            else
-            {
-                <span>N/A</span>
-            }
-        </p>
+                @if (Model.ProcessedAt.HasValue)
+                {
+                    <dt class="col-sm-3">Processed At</dt>
+                    <dd class="col-sm-9">@Model.ProcessedAt.Value.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</dd>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.ProcessedById))
+                {
+                    <dt class="col-sm-3">Processed By</dt>
+                    <dd class="col-sm-9">@Model.ProcessedById</dd>
+                }
+            </dl>
+        </div>
     </div>
-</div>
 
-@* Receipt / preview section with Download Confirm Modal *@
-@if (!string.IsNullOrEmpty(Model.ReceiptPath))
-{
-    <div class="mb-4">
-        <div class="mb-2">
-            <a class="btn btn-sm btn-outline-primary me-2" asp-action="DownloadReceipt" asp-route-id="@Model.Id" asp-route-mode="preview">Preview</a>
+    @* Receipt Section *@
+    @if (!string.IsNullOrEmpty(Model.ReceiptPath))
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold">Receipt</span>
+                <div>
+                    <a class="btn btn-sm btn-outline-primary me-2"
+                       asp-action="DownloadReceipt" asp-route-id="@Model.Id" asp-route-mode="preview">
+                        Preview
+                    </a>
 
-            @* Download button: opens modal *@
-            <button type="button"
-                    class="btn btn-sm btn-outline-secondary"
-                    id="btnDownloadConfirm"
-                    data-download-url="@Url.Action("DownloadReceipt", "Claims", new { id = Model.Id, mode = "download" })">
-                Download
-            </button>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            id="btnDownloadConfirm"
+                            data-download-url="@Url.Action("DownloadReceipt", "Claims", new { id = Model.Id, mode = "download" })">
+                        Download
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0" style="height:700px;">
+                <iframe id="receiptFrame"
+                        src="@Url.Action("DownloadReceipt", "Claims", new { id = Model.Id, mode = "preview" })"
+                        width="100%" height="100%" frameborder="0"></iframe>
+            </div>
         </div>
 
-        <div style="height:700px; border:1px solid #e1e1e1; padding:6px;">
-            <iframe id="receiptFrame"
-                    src="@Url.Action("DownloadReceipt", "Claims", new { id = Model.Id, mode = "preview" })"
-                    width="100%" height="100%" frameborder="0"></iframe>
-        </div>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <div class="modal fade" id="confirmDownloadModal" tabindex="-1" aria-labelledby="confirmDownloadModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="confirmDownloadModalLabel">Confirm Download</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to download the receipt? The file will be saved to your device.
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <a id="confirmDownloadBtn" class="btn btn-sm btn-primary" href="#" role="button">Confirm Download</a>
+        <!-- Confirmation Modal -->
+        <div class="modal fade" id="confirmDownloadModal" tabindex="-1" aria-labelledby="confirmDownloadModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-sm modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmDownloadModalLabel">Confirm Download</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to download the receipt? The file will be saved to your device.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <a id="confirmDownloadBtn" class="btn btn-sm btn-primary" href="#" role="button">Confirm Download</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    @section Scripts {
-        <script>
-            (function () {
-                // bootstrap modal instance
-                var confirmModalEl = document.getElementById('confirmDownloadModal');
-                var confirmModal = new bootstrap.Modal(confirmModalEl);
+        @section Scripts {
+            <script>
+                (function () {
+                    var confirmModalEl = document.getElementById('confirmDownloadModal');
+                    var confirmModal = new bootstrap.Modal(confirmModalEl);
 
-                // when user clicks Download button, open modal and set confirm href
-                document.getElementById('btnDownloadConfirm').addEventListener('click', function (e) {
-                    var url = this.getAttribute('data-download-url');
-                    document.getElementById('confirmDownloadBtn').setAttribute('href', url);
-                    confirmModal.show();
-                });
-            })();
-        </script>
+                    document.getElementById('btnDownloadConfirm').addEventListener('click', function () {
+                        var url = this.getAttribute('data-download-url');
+                        document.getElementById('confirmDownloadBtn').setAttribute('href', url);
+                        confirmModal.show();
+                    });
+                })();
+            </script>
+        }
     }
-}
-else
-{
-    <div class="alert alert-secondary">
-        No receipt uploaded for this claim.
-    </div>
-}
+    else
+    {
+        <div class="alert alert-secondary">
+            No receipt uploaded for this claim.
+        </div>
+    }
 
-
+    <a asp-action="Index" class="btn btn-outline-secondary mt-3">← Back to My Claims</a>
+</div>

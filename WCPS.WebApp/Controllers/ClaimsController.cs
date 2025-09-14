@@ -59,16 +59,16 @@ namespace WCPS.WebApp.Controllers
             string? savedRelativePath = null;
             if (Receipt != null && Receipt.Length > 0)
             {
-                // Validate content type and extension
-                var allowedContentType = "application/pdf";
                 var ext = Path.GetExtension(Receipt.FileName).ToLowerInvariant();
-                if (Receipt.ContentType != allowedContentType || ext != ".pdf")
+
+                // --- Security: validate extension & content type ---
+                if (ext != ".pdf" || Receipt.ContentType != "application/pdf")
                 {
                     ModelState.AddModelError("Receipt", "Only PDF files are allowed.");
                     return View(model);
                 }
 
-                // max 5 MB
+                // --- Limit size ---
                 const long maxBytes = 5 * 1024 * 1024;
                 if (Receipt.Length > maxBytes)
                 {
@@ -76,12 +76,11 @@ namespace WCPS.WebApp.Controllers
                     return View(model);
                 }
 
-                // Ensure uploads folder exists: wwwroot/uploads/{userId}
+                // --- Save file ---
                 var uploadsRoot = Path.Combine(_env.WebRootPath, "uploads");
                 var userFolder = Path.Combine(uploadsRoot, userId);
                 Directory.CreateDirectory(userFolder);
 
-                // Generate unique filename and save
                 var fileName = $"{Guid.NewGuid():N}{ext}";
                 var filePath = Path.Combine(userFolder, fileName);
 
@@ -90,7 +89,6 @@ namespace WCPS.WebApp.Controllers
                     await Receipt.CopyToAsync(stream);
                 }
 
-                // Store relative path for DB like "userId/filename.pdf"
                 savedRelativePath = Path.Combine(userId, fileName).Replace('\\', '/');
             }
 
@@ -108,18 +106,18 @@ namespace WCPS.WebApp.Controllers
             _db.ClaimRequests.Add(claim);
             await _db.SaveChangesAsync();
 
-            // Add audit trail entry
-            var audit = new AuditTrail
+            // --- Audit: record claim creation ---
+            _db.AuditTrails.Add(new AuditTrail
             {
                 Entity = "ClaimRequest",
                 EntityId = claim.Id,
                 Action = "CREATE",
                 PerformedById = userId,
                 Timestamp = DateTime.UtcNow
-            };
-            _db.AuditTrails.Add(audit);
+            });
             await _db.SaveChangesAsync();
 
+            TempData["Notice"] = "Claim submitted successfully.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -140,7 +138,7 @@ namespace WCPS.WebApp.Controllers
             return View(claim);
         }
 
-        // Download / Preview receipt PDF (authorized)
+        // GET: /Claims/DownloadReceipt/{id}
         [Authorize]
         public async Task<IActionResult> DownloadReceipt(int id, string? mode = null)
         {
@@ -148,26 +146,36 @@ namespace WCPS.WebApp.Controllers
             if (claim == null || string.IsNullOrEmpty(claim.ReceiptPath))
                 return NotFound();
 
-            // authorization: owner or admins/finance can access
             var userId = _userManager.GetUserId(User);
+
+            // --- Authorization check ---
             if (claim.EmployeeId != userId && !User.IsInRole("CpdAdmin") && !User.IsInRole("Finance"))
                 return Forbid();
 
             var fullPath = Path.Combine(_env.WebRootPath, "uploads", claim.ReceiptPath.Replace('/', Path.DirectorySeparatorChar));
             if (!System.IO.File.Exists(fullPath)) return NotFound();
 
-            var contentType = "application/pdf";
-            // If caller explicitly asks for download, return a PhysicalFile with a download filename (forces attachment)
+            const string contentType = "application/pdf";
+            var fileName = Path.GetFileName(fullPath);
+
+            // --- Audit: record receipt access ---
+            _db.AuditTrails.Add(new AuditTrail
+            {
+                Entity = "ClaimRequest",
+                EntityId = claim.Id,
+                Action = string.IsNullOrEmpty(mode) ? "RECEIPT_PREVIEW" : "RECEIPT_DOWNLOAD",
+                PerformedById = userId,
+                Timestamp = DateTime.UtcNow
+            });
+            await _db.SaveChangesAsync();
+
             if (!string.IsNullOrEmpty(mode) && mode.Equals("download", StringComparison.OrdinalIgnoreCase))
             {
-                var fileName = Path.GetFileName(fullPath);
-                return PhysicalFile(fullPath, contentType, fileName); // forces download
+                return PhysicalFile(fullPath, contentType, fileName); // download
             }
 
-            // Otherwise, return inline preview: stream the file without a download filename (browser can render inline)
             var fs = System.IO.File.OpenRead(fullPath);
-            return new FileStreamResult(fs, contentType);
+            return new FileStreamResult(fs, contentType); // inline preview
         }
-
     }
 }

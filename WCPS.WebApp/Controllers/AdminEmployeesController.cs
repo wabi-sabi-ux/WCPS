@@ -122,6 +122,20 @@ namespace WCPS.WebApp.Controllers
                 }
             }
 
+            // Audit: user created
+            var adminId = _userManager.GetUserId(User);
+            _db.AuditTrails.Add(new AuditTrail
+            {
+                Entity = "ApplicationUser",
+                EntityId = user.Id.GetHashCode(), // store an int: use hashcode of user id for traceability
+                Action = "CREATE",
+                PerformedById = adminId,
+                Timestamp = DateTime.UtcNow
+            });
+            await _db.SaveChangesAsync();
+
+            TempData["Notice"] = "Employee created successfully.";
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -196,6 +210,20 @@ namespace WCPS.WebApp.Controllers
                 }
             }
 
+            // Audit: user updated
+            var adminId = _userManager.GetUserId(User);
+            _db.AuditTrails.Add(new AuditTrail
+            {
+                Entity = "ApplicationUser",
+                EntityId = user.Id.GetHashCode(),
+                Action = "UPDATE",
+                PerformedById = adminId,
+                Timestamp = DateTime.UtcNow
+            });
+            await _db.SaveChangesAsync();
+
+            TempData["Notice"] = "Employee updated successfully.";
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -247,6 +275,20 @@ namespace WCPS.WebApp.Controllers
                 foreach (var e in deleteResult.Errors) ModelState.AddModelError(string.Empty, e.Description);
                 return View("Delete", vm);
             }
+
+            // Audit: user deleted
+            var adminId = _userManager.GetUserId(User);
+            _db.AuditTrails.Add(new AuditTrail
+            {
+                Entity = "ApplicationUser",
+                EntityId = user.Id.GetHashCode(),
+                Action = "DELETE",
+                PerformedById = adminId,
+                Timestamp = DateTime.UtcNow
+            });
+            await _db.SaveChangesAsync();
+
+            TempData["Notice"] = "Employee deleted successfully.";
 
             return RedirectToAction(nameof(Index));
         }

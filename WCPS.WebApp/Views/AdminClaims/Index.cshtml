@@ -1,77 +1,54 @@
-﻿@{
-    ViewData["Title"] = "Admin Dashboard";
+﻿@model IEnumerable<WCPS.WebApp.Models.ClaimRequest>
+
+@{
+    ViewData["Title"] = "Pending Claims";
 }
 
 <div class="container mt-4">
-    <h2 class="mb-4">Admin Dashboard</h2>
-
-    <div class="row g-4">
-        <!-- Pending Claims Tile -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body d-flex flex-column justify-content-between">
-                    <h5 class="card-title">Pending Claims</h5>
-                    <p class="card-text text-muted">View and process employee claims waiting for approval.</p>
-                    <a asp-controller="AdminClaims" asp-action="Index" class="btn btn-primary mt-auto">
-                        View Pending
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Employee Management Tile -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body d-flex flex-column justify-content-between">
-                    <h5 class="card-title">Manage Employees</h5>
-                    <p class="card-text text-muted">Add, edit, or remove employees and manage their roles.</p>
-                    <a asp-controller="AdminEmployees" asp-action="Index" class="btn btn-success mt-auto">
-                        Manage Employees
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Audit Trail Tile -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body d-flex flex-column justify-content-between">
-                    <h5 class="card-title">Audit Trail</h5>
-                    <p class="card-text text-muted">View all system activities and claim history for compliance.</p>
-                    <a asp-controller="AdminClaims" asp-action="Audit" class="btn btn-outline-primary mt-auto">
-                        Open Audit
-                    </a>
-                </div>
-            </div>
-        </div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Pending Claims</h2>
+        <a asp-controller="AdminClaims" asp-action="Index" class="btn btn-outline-secondary">Refresh</a>
     </div>
-
-    <!-- Optional: Chart Section -->
-    <div class="row mt-5">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Claims Overview</h5>
-                    <canvas id="claimsPieChart"></canvas>
-                </div>
-            </div>
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">There are no pending claims at the moment.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Ref</th>
+                        <th>Title</th>
+                        <th>Employee</th>
+                        <th>Claimed</th>
+                        <th>Submitted</th>
+                        <th style="width:160px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model)
+                    {
+                        <tr>
+                            <td class="text-break">@c.ClaimRef</td>
+                            <td>@c.Title</td>
+                            <td>@(c.Employee?.FullName ?? c.EmployeeId)</td>
+                            <td>₹@c.AmountClaimed.ToString("N2")</td>
+                            <td>@c.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</td>
+                            <td class="text-end">
+                                <a asp-controller="AdminClaims" asp-action="Process" asp-route-id="@c.Id" class="btn btn-sm btn-primary me-1">
+                                    Process
+                                </a>
+                                <a asp-controller="Claims" asp-action="Details" asp-route-id="@c.Id" class="btn btn-sm btn-outline-secondary">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
-    </div>
+    }
 </div>
-
-@section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const ctx = document.getElementById('claimsPieChart').getContext('2d');
-        const claimsPieChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['Pending', 'Approved', 'Rejected'],
-                datasets: [{
-                    data: [10, 20, 5], // placeholder, can be replaced with dynamic values
-                    backgroundColor: ['#f0ad4e', '#5cb85c', '#d9534f']
-                }]
-            }
-        });
-    </script>
-}
+    

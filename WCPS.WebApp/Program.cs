@@ -1,13 +1,27 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using WCPS.WebApp.Data;
 using WCPS.WebApp.Models;
+using WCPS.WebApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ---- Services (must be before Build) ----
+var configuration = builder.Configuration;
+
+// Db connection (reads from appsettings / user-secrets / env)
+var conn = configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(conn))
+{
+    throw new InvalidOperationException(
+        "Missing connection string 'DefaultConnection'. " +
+        "Set it using `dotnet user-secrets` or an environment variable. " +
+        "See README for exact commands.");
+}
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(conn));
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -22,43 +36,32 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
+// Register FileService (assumes you have this class under Services)
+builder.Services.AddTransient<FileService>();
+
 var app = builder.Build();
 
-// ---- Role + Admin seeding ----
+// ---- Role + Admin seeding (safe: logs errors instead of throwing) ----
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
 
-    string[] roles = { "Employee", "CpdAdmin", "Finance" };
-    foreach (var r in roles)
+    try
     {
-        if (!await roleManager.RoleExistsAsync(r))
-            await roleManager.CreateAsync(new IdentityRole(r));
+        var db = services.GetRequiredService<ApplicationDbContext>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+
+        // Run seed but don't allow seeding failures to crash the app
+        await SeedData.InitializeAsync(db, roleManager, userManager, logger);
     }
-
-    var adminEmail = "admin@wcps.local";
-    var adminUser = await userManager.FindByEmailAsync(adminEmail);
-    if (adminUser == null)
+    catch (Exception ex)
     {
-        adminUser = new ApplicationUser
-        {
-            UserName = adminEmail,
-            Email = adminEmail,
-            FullName = "CPD Admin",
-            EmployeeNo = "ADMIN001",
-            EmailConfirmed = true
-        };
-        var result = await userManager.CreateAsync(adminUser, "Admin@1234");
-        if (result.Succeeded)
-        {
-            await userManager.AddToRoleAsync(adminUser, "CpdAdmin");
-        }
-        else
-        {
-            foreach (var e in result.Errors)
-                Console.WriteLine($"Admin seed error: {e.Code} - {e.Description}");
-        }
+        // Log unexpected errors, do not rethrow
+        var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+        var log = loggerFactory.CreateLogger<Program>();
+        log.LogError(ex, "Unexpected error during application seed. Continuing without seeding.");
     }
 }
 

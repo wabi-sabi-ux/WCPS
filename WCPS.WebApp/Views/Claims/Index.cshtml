@@ -1,6 +1,10 @@
-﻿@model IEnumerable<WCPS.WebApp.Models.ClaimRequest>
+﻿@using WCPS.WebApp.Models
+@inject Microsoft.AspNetCore.Identity.UserManager<WCPS.WebApp.Models.ApplicationUser> UserManager
+@model IEnumerable<WCPS.WebApp.Models.ClaimRequest>
+
 @{
     ViewData["Title"] = "My Claims";
+    var currentUserId = UserManager.GetUserId(User);
 }
 
 <div class="container mt-4">
@@ -46,15 +50,15 @@
                                 }
                             </td>
                             <td>
-                                @if (claim.Status == WCPS.WebApp.Models.ClaimStatus.Pending)
+                                @if (claim.Status == ClaimStatus.Pending)
                                 {
                                     <span class="badge bg-warning text-dark">Pending</span>
                                 }
-                                else if (claim.Status == WCPS.WebApp.Models.ClaimStatus.Approved)
+                                else if (claim.Status == ClaimStatus.Approved)
                                 {
                                     <span class="badge bg-success">Approved</span>
                                 }
-                                else if (claim.Status == WCPS.WebApp.Models.ClaimStatus.Rejected)
+                                else if (claim.Status == ClaimStatus.Rejected)
                                 {
                                     <span class="badge bg-danger">Rejected</span>
                                     <div class="small text-muted mt-1">Your claim was rejected.</div>
@@ -62,14 +66,17 @@
                             </td>
                             <td>@claim.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</td>
                             <td class="text-nowrap">
-                                <a asp-action="Details" asp-route-id="@claim.Id" class="btn btn-sm btn-outline-secondary me-1">
-                                    View
-                                </a>
-                                @if (!string.IsNullOrEmpty(claim.ReceiptPath))
+                                <a asp-action="Details" asp-route-id="@claim.Id" class="btn btn-sm btn-outline-secondary me-1">View</a>
+
+                                @* Owner-only edit/delete while pending *@
+                                @if (claim.EmployeeId == currentUserId && claim.Status == ClaimStatus.Pending)
                                 {
-                                    <a asp-action="DownloadReceipt" asp-route-id="@claim.Id" class="btn btn-sm btn-outline-info">
-                                        Receipt
-                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@claim.Id" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                                    <a asp-action="Delete" asp-route-id="@claim.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                                }
+                                else if (!string.IsNullOrEmpty(claim.ReceiptPath))
+                                {
+                                    <a asp-action="DownloadReceipt" asp-route-id="@claim.Id" class="btn btn-sm btn-outline-info">Receipt</a>
                                 }
                             </td>
                         </tr>

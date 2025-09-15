@@ -1,5 +1,6 @@
 ﻿@model WCPS.WebApp.ViewModels.DashboardViewModel
 @using WCPS.WebApp.Models
+@using System.Text.Json
 
 @{
     ViewData["Title"] = "Home";
@@ -73,7 +74,7 @@ else if (isAdmin)
                 <div class="card shadow-sm h-100">
                     <div class="card-body">
                         <h6 class="card-title">Recent Activity</h6>
-                        <p class="mb-0 small text-muted">@Model.RecentActivity.Count item(s)</p>
+                        <p class="mb-0 small text-muted">@((Model.RecentActivity?.Count ?? 0)) item(s)</p>
                     </div>
                     <div class="card-footer bg-white">
                         <a asp-controller="AdminClaims" asp-action="Audit" class="btn btn-sm btn-outline-primary">Open Audit</a>
@@ -128,9 +129,11 @@ else if (isAdmin)
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             (function () {
-                var approved = @Model.AdminApprovedCount;
-                var pending = @Model.PendingClaimsCount;
-                var rejected = @Model.AdminRejectedCount;
+                // use JSON serialization so values are correctly injected
+                var approved = @Html.Raw(JsonSerializer.Serialize(Model.AdminApprovedCount));
+                var pending = @Html.Raw(JsonSerializer.Serialize(Model.PendingClaimsCount));
+                var rejected = @Html.Raw(JsonSerializer.Serialize(Model.AdminRejectedCount));
+
 
                 var ctx = document.getElementById('claimsPieChart').getContext('2d');
 
@@ -141,7 +144,7 @@ else if (isAdmin)
                     data: {
                         labels: ['Approved', 'Pending', 'Rejected'],
                         datasets: [{
-                            data: [approved || 0, pending || 0, rejected || 0],
+                            data: [approved, pending, rejected],
                             backgroundColor: ['#28a745', '#ffc107', '#dc3545']
                         }]
                     },

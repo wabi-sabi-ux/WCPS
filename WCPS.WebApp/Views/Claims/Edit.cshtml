@@ -1,0 +1,61 @@
+﻿@model WCPS.WebApp.ViewModels.EditClaimViewModel
+
+@{
+    ViewData["Title"] = "Edit Claim";
+}
+
+<div class="container mt-4">
+    <h2>Edit Claim</h2>
+
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="AmountClaimed" class="form-label"></label>
+            <input asp-for="AmountClaimed" class="form-control" type="number" step="0.01" min="0" />
+            <span asp-validation-for="AmountClaimed" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Existing receipt</label>
+            @if (!string.IsNullOrEmpty(Model.ExistingReceiptPath))
+            {
+                <div class="mb-2">
+                    <a asp-action="DownloadReceipt" asp-route-id="@Model.Id" asp-route-mode="preview" class="btn btn-sm btn-outline-info me-2">Preview</a>
+                    <a asp-action="DownloadReceipt" asp-route-id="@Model.Id" asp-route-mode="download" class="btn btn-sm btn-outline-secondary">Download</a>
+                </div>
+                <div class="small text-muted">Uploading a new file will replace the existing receipt.</div>
+            }
+            else
+            {
+                <div class="small text-muted">No receipt uploaded yet.</div>
+            }
+        </div>
+
+        <div class="mb-3">
+            <label for="Receipt" class="form-label">Replace receipt (optional)</label>
+            <input type="file" name="Receipt" id="Receipt" accept="application/pdf,image/*" class="form-control" />
+            <div class="form-text">If you upload a new file it will replace the existing receipt. Max 5 MB.</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -35,10 +35,11 @@
     </div>
 
     <div class="mb-3">
-        <label for="Receipt" class="form-label">Upload receipt (PDF, max 5 MB)</label>
-        <input type="file" name="Receipt" id="Receipt" accept="application/pdf" class="form-control" />
-        <span class="text-muted">Optional — upload a scanned receipt or invoice (PDF only).</span>
+        <label for="Receipt" class="form-label">Upload receipt (PDF or image, max 5 MB)</label>
+        <input type="file" name="Receipt" id="Receipt" accept="application/pdf,image/*" class="form-control" />
+        <span class="text-muted">Optional — upload a scanned receipt or invoice (PDF, JPG, PNG). Max 5 MB.</span>
     </div>
+
 
     <button type="submit" class="btn btn-primary">Submit</button>
     <a asp-action="Index" class="btn btn-secondary ms-2">Back</a>

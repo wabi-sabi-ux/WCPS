@@ -1,0 +1,28 @@
+﻿@model WCPS.WebApp.Models.ClaimRequest
+
+@{
+    ViewData["Title"] = "Delete Claim";
+}
+
+<div class="container mt-4">
+    <h2>Delete Claim</h2>
+
+    <div class="alert alert-warning">
+        <strong>Are you sure?</strong> This will permanently delete the claim and its uploaded receipt (if any).
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>@Model.Title</h5>
+            <p class="mb-1"><strong>Ref:</strong> @Model.ClaimRef</p>
+            <p class="mb-1"><strong>Amount:</strong> ₹@Model.AmountClaimed.ToString("N2")</p>
+            <p class="mb-1"><strong>Status:</strong> @Model.Status</p>
+        </div>
+    </div>
+
+    <form asp-action="Delete" method="post">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <button type="submit" class="btn btn-danger">Yes, delete</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+</div>

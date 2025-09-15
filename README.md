@@ -63,10 +63,10 @@ Employees can easily submit receipts for expenses, while admins get a dashboard 
    dotnet run
 
 ##👤 Default Admin User
--At first run, seed data creates an admin account:
--Email: admin@wcps.local
--Password: Admin@1234
--Role: CpdAdmin
+- At first run, seed data creates an admin account:
+- Email: admin@wcps.local
+- Password: Admin@1234
+- Role: CpdAdmin
 
 ## 📁 Project Structure
 ```bash

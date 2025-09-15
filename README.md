@@ -69,6 +69,7 @@ Employees can easily submit receipts for expenses, while admins get a dashboard 
 -Role: CpdAdmin
 
 ## 📁 Project Structure
+```bash
 WCPS.WebApp/
  ├── Controllers/        # MVC controllers (Claims, Admin, Employees)
  ├── Models/             # Entity models (ClaimRequest, AuditTrail, ApplicationUser)

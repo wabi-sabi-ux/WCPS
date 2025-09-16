@@ -58,7 +58,6 @@ namespace WCPS.WebApp.Controllers
 
             var userId = _userManager.GetUserId(User);
 
-            // Handle file upload (optional) via FileService
             string? savedRelativePath = null;
             if (Receipt != null && Receipt.Length > 0)
             {
@@ -153,13 +152,11 @@ namespace WCPS.WebApp.Controllers
             var claim = await _db.ClaimRequests.FirstOrDefaultAsync(c => c.Id == model.Id);
             if (claim == null) return NotFound();
 
-            // Only owner can edit, and only while Pending
-            if (claim.EmployeeId != userId)
+            if (claim.EmployeeId != userId) //omly user can edit and only while it is Pending
                 return Forbid();
             if (claim.Status != ClaimStatus.Pending)
                 return BadRequest("Only pending claims can be edited.");
 
-            // If a new receipt is uploaded, save it and delete the old one
             if (Receipt != null && Receipt.Length > 0)
             {
                 var result = await _fileService.SaveReceiptAsync(Receipt, userId);
@@ -180,7 +177,7 @@ namespace WCPS.WebApp.Controllers
                     }
                     catch
                     {
-                        // ignore deletion failure, but you might want to log it
+                        // ignore deletion failure.
                     }
                 }
 
@@ -216,8 +213,7 @@ namespace WCPS.WebApp.Controllers
             var claim = await _db.ClaimRequests.Include(c => c.Employee).FirstOrDefaultAsync(c => c.Id == id);
             if (claim == null) return NotFound();
 
-            // Owner can delete their pending claim. Admins/Finance can delete any claim.
-            var isOwner = claim.EmployeeId == userId;
+            var isOwner = claim.EmployeeId == userId; //owner can delete their pending claim.
             var isAdmin = User.IsInRole("CpdAdmin") || User.IsInRole("Finance");
 
             if (!isOwner && !isAdmin) return Forbid();
@@ -251,7 +247,7 @@ namespace WCPS.WebApp.Controllers
                 }
                 catch
                 {
-                    // ignore deletion errors (log if you like)
+                    // ignore deletion err
                 }
             }
 
@@ -306,7 +302,6 @@ namespace WCPS.WebApp.Controllers
 
             if (!string.IsNullOrEmpty(mode) && mode.Equals("download", StringComparison.OrdinalIgnoreCase))
             {
-                // Force download (attachment)
                 return PhysicalFile(fullPath, contentType, fileName);
             }
 

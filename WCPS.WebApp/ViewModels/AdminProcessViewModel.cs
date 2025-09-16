@@ -9,7 +9,6 @@ namespace WCPS.WebApp.ViewModels
         [Required]
         public int ClaimId { get; set; }
 
-        // Display-only fields (not required on POST)
         public string? ClaimRef { get; set; }
         public string? Title { get; set; }
         public decimal AmountClaimed { get; set; }

@@ -7,10 +7,8 @@ using WCPS.WebApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ---- Services (must be before Build) ----
 var configuration = builder.Configuration;
 
-// Db connection (reads from appsettings / user-secrets / env)
 var conn = configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(conn))
 {
@@ -36,12 +34,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-// Register FileService (assumes you have this class under Services)
 builder.Services.AddTransient<FileService>();
 
 var app = builder.Build();
 
-// ---- Role + Admin seeding (safe: logs errors instead of throwing) ----
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -53,19 +49,16 @@ using (var scope = app.Services.CreateScope())
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
-        // Run seed but don't allow seeding failures to crash the app
         await SeedData.InitializeAsync(db, roleManager, userManager, logger);
     }
     catch (Exception ex)
     {
-        // Log unexpected errors, do not rethrow
         var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
         var log = loggerFactory.CreateLogger<Program>();
         log.LogError(ex, "Unexpected error during application seed. Continuing without seeding.");
     }
 }
 
-// ---- Middleware pipeline ----
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

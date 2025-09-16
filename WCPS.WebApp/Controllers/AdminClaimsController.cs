@@ -24,7 +24,7 @@ namespace WCPS.WebApp.Controllers
             _userManager = userManager;
         }
 
-        // GET: /AdminClaims
+        //GET: /AdminClaims
         public async Task<IActionResult> Index()
         {
             var pending = await _db.ClaimRequests
@@ -36,17 +36,17 @@ namespace WCPS.WebApp.Controllers
 
             return View(pending);
         }
-        // GET: /AdminClaims/Audit
+        //GET: /AdminClaims/Audit
         [Authorize(Roles = "CpdAdmin")]
         public async Task<IActionResult> Audit()
         {
             var audits = await _db.AuditTrails
                                   .AsNoTracking()
                                   .OrderByDescending(a => a.Timestamp)
-                                  .Take(200) // limit to reasonable amount
+                                  .Take(200) 
                                   .ToListAsync();
 
-            // Map to simple vm (reuse AuditEntryViewModel if you already have it)
+            // Map to simple vm
             var vm = audits.Select(a => new WCPS.WebApp.ViewModels.AuditEntryViewModel
             {
                 Action = a.Action,
@@ -67,8 +67,7 @@ namespace WCPS.WebApp.Controllers
                                  .FirstOrDefaultAsync(c => c.Id == id);
 
             if (claim == null) return NotFound();
-
-            // Load audits
+            //Loads audit
             var audits = await _db.AuditTrails
                                   .Where(a => a.Entity == "ClaimRequest" && a.EntityId == claim.Id)
                                   .OrderByDescending(a => a.Timestamp)

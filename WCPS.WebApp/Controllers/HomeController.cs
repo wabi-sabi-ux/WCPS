@@ -86,7 +86,6 @@ namespace WCPS.WebApp.Controllers
             return View();
         }
 
-        // you can keep the existing error action if you have one
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

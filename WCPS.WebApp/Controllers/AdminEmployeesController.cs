@@ -105,7 +105,7 @@ namespace WCPS.WebApp.Controllers
                 return View(model);
             }
 
-            // assign roles if provided (comma separated)
+            // assign roles with comma seperated
             if (!string.IsNullOrWhiteSpace(model.Roles))
             {
                 var roles = model.Roles.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -117,7 +117,7 @@ namespace WCPS.WebApp.Controllers
                     }
                     catch
                     {
-                        // ignore or log
+                        //ignore
                     }
                 }
             }
@@ -127,7 +127,7 @@ namespace WCPS.WebApp.Controllers
             _db.AuditTrails.Add(new AuditTrail
             {
                 Entity = "ApplicationUser",
-                EntityId = user.Id.GetHashCode(), // store an int: use hashcode of user id for traceability
+                EntityId = user.Id.GetHashCode(),
                 Action = "CREATE",
                 PerformedById = adminId,
                 Timestamp = DateTime.UtcNow
@@ -187,7 +187,7 @@ namespace WCPS.WebApp.Controllers
                 return View(model);
             }
 
-            // update roles — remove all existing and add new ones (simple approach)
+            // update roles
             var currentRoles = await _userManager.GetRolesAsync(user);
             if (currentRoles.Any())
             {

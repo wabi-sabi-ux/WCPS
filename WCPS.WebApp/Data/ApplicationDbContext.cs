@@ -8,7 +8,7 @@ namespace WCPS.WebApp.Data
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options) { }
-        public DbSet<ClaimRequest> ClaimRequests { get; set; }
-        public DbSet<AuditTrail> AuditTrails { get; set; }
+        public DbSet<ClaimRequest> ClaimRequests { get; set; } //for claim requests
+        public DbSet<AuditTrail> AuditTrails { get; set; } //for audittrail
     }
 }

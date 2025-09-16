@@ -16,7 +16,6 @@ namespace WCPS.WebApp.ViewModels
         [Range(1, 100000)]
         public decimal AmountClaimed { get; set; }
 
-        // read-only: path stored in DB for display/preview
         public string? ExistingReceiptPath { get; set; }
     }
 }

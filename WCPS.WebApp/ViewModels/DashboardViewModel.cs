@@ -18,8 +18,8 @@ namespace WCPS.WebApp.ViewModels
 
         // admin stats
         public int PendingClaimsCount { get; set; }
-        public int AdminApprovedCount { get; set; }   // NEW
-        public int AdminRejectedCount { get; set; }   // NEW
+        public int AdminApprovedCount { get; set; }
+        public int AdminRejectedCount { get; set; }
         public int TotalEmployees { get; set; }
         public List<AuditSummaryVm> RecentActivity { get; set; } = new();
     }
